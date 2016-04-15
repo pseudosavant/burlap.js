@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Burlap.js Test Harness</title>
+  </head>
+  <body>
+    <img src="image.png" class=source>
+    <img class=normalized>
+    <img class=inverted>
+    <img class="inverted normalized">
+    
+    <script src="../src/burlap.js"></script>
+    <script>
+      document.body.onload = function(){
+        var $source = document.querySelector('.source');
+        var $normalized = document.querySelector('.normalized');
+        var $inverted = document.querySelector('.inverted');
+        var $invertedAndNormalized = document.querySelector('.inverted.normalized');
+        
+        $normalized.src = new Burlap($source).normalize().toPNG();
+        $inverted.src = new Burlap($source).invert().toPNG();
+        $invertedAndNormalized.src = new Burlap($source).invert().normalize().toJPEG(1);
+      };
+    </script>
+  </body>
+</html>

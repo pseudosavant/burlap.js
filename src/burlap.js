@@ -1,15 +1,17 @@
 (function(global) {
   'use strict';
   
+  function realWidth(el) {
+    return el.naturalWidth || el.width;
+  }
+
+  function realHeight(el) {
+    return el.naturalHeight || el.height;
+  }
+  
   function isX(tagName) {
-    return function(throwException) {
-      var el = this.el;
+    return function(el, throwException) {
       var result = (el && el.tagName && (!tagName || tagName.toLowerCase() === el.tagName.toLowerCase) );
-
-      if (!result && throwException !== false) {
-        throw Error( (tagName || 'Element') + ' expected');
-      }
-
       return result;
     }    
   }
@@ -26,39 +28,28 @@
     return canvas;
   }
 
-  function toCanvas() {
-    var el = this.el;
+  function toCanvas(el) {
+    el = el || this.el;
 
     isElement(el);
+    
+    var width = realWidth(el);
+    var height = realHeight(el);
 
-    var canvas = document.createElement('canvas');
-    var context = canvas.getContext('2d');
-    var width = canvas.width = el.naturalWidth || el.width;
-    var height = canvas.height = el.naturalHeight || el.height;
+    var canvas = getCanvas(width, height);
 
-    context.drawImage(el, 0, 0, width, height);
+    toContext(canvas).drawImage(el, 0, 0, width, height);
 
     return canvas;
   }
-
-  function toImage() {
-    var el = this.el;
-    isElement(el);
-
-    return toPNG(toCanvas(el));
+  
+  function toContext(canvas) {
+    return canvas.getContext('2d');
   }
 
-  function toJPEG(quality) {
-    var el = this.el;
-    return rasterize(el, 'image/jpeg', quality);
-  }
-
-  function toPNG() {
-    var el = this.el;
-    return rasterize(el, 'image/png');
-  }
-
-  function rasterize(el, mime, quality) {
+  function rasterize(elementOrString, mime, quality) {
+    var el;
+    
     if (!mime) {
       throw Error('No mime type specified for rasterization');
     }
@@ -67,16 +58,17 @@
       throw Error('Invalid quality level specified');
     }
 
-    if (typeof el === 'string') {
-      var src = el;
+    if (typeof elementOrString === 'string') {
       el = document.createElement('img');
-      el.src = src;
+      el.src = elementOrString;
+    } else {
+      el = elementOrString;
     }
 
-    var width = el.naturalWidth || el.width;
-    var height = el.naturalHeight || el.height;
+    var width = realWidth(el);
+    var height = realHeight(el);
     var canvas = getCanvas(width, height);
-    var context = canvas.getContext('2d');
+    var context = toContext(canvas);
 
     context.drawImage(el, 0, 0, width, height);
 
@@ -85,10 +77,18 @@
     return dataUri;
   }
 
-  function invert() {
-    var canvas = this.el;
-    var context = canvas.getContext('2d');
+  function toJPEG(quality) {
+    return rasterize(this.el, 'image/jpeg', quality);
+  }
 
+  function toPNG() {
+    return rasterize(this.el, 'image/png');
+  }
+  
+  function invert() {
+    var canvas = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    var context = toContext(canvas);
+    
     var imageData = pixelData(canvas);
     var pixels = imageData.data;
     var numPixels = pixels.length;
@@ -96,7 +96,6 @@
     // Clear the image
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    // noprotect
     // Access and change pixel values
     for (var i = 0; i < numPixels; i += 4) {
       pixels[i] = 255 - pixels[i]; // Red
@@ -106,22 +105,20 @@
 
     // Draw image data to the canvas
     context.putImageData(imageData, 0, 0);
-
-    return canvas;
+    
+    this.el = canvas;
+    
+    return this;
   }
 
-  function pixelData() {
-    var canvas = this.el;
-    var context = canvas.getContext('2d');
-
-    var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-    return imageData;
+  function pixelData(canvas) {
+    var context = toContext(canvas);
+    return context.getImageData(0, 0, canvas.width, canvas.height);
   }
 
   function normalize() {
-    var canvas = this.el;
-    var context = canvas.getContext('2d');
+    var canvas = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    var context = toContext(canvas);
 
     var imageData = pixelData(canvas);
     var pixels = imageData.data;
@@ -134,7 +131,6 @@
       a: 0
     };
 
-    // noprotect
     // Access and change pixel values
     for (var i = 0; i < numPixels; i += 4) {
       max.r = (pixels[i] > max.r ? pixels[i] : max.r); // Red
@@ -169,7 +165,7 @@
     var height = aImg.naturalHeight;
 
     var canvas = getCanvas(width, height);
-    var context = canvas.getContext('2d');
+    var context = toContext(canvas);
 
     var aCanvas = imageToCanvas(aImg);
     var bCanvas = imageToCanvas(bImg);
@@ -187,7 +183,6 @@
     var bImageData = pixelData(bCanvas);
     var bPixels = bImageData.data;
 
-
     function mathFn(val) {
       if (meanSquared) {
         return Math.pow(val, 2);
@@ -196,7 +191,6 @@
       }
     }
 
-    // noprotect
     // Access and change pixel values
     for (var i = 0; i < numPixels; i += 4) {
       pixels[i] = mathFn(aPixels[i] - bPixels[i]); // Red
@@ -223,12 +217,7 @@
   Burlap.prototype.toCanvas = toCanvas;
   Burlap.prototype.toPNG = toPNG;
   Burlap.prototype.toJPEG = toJPEG;
-  Burlap.prototype.toImage = toImage;
-
+  
   Burlap.prototype.invert = invert;
   Burlap.prototype.normalize = normalize;
-
-  Burlap.prototype.isCanvas = isCanvas;
-  Burlap.prototype.isElement = isElement;
-
 })(this);
