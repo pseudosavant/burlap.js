@@ -2,24 +2,143 @@
 <html>
   <head>
     <title>Burlap.js Test Harness</title>
+    <style>
+      body {
+        color: #FFF;
+        font-family: Calibri, Arial, Helvetica, sans-serif;
+        background-image: url(bkg.png);
+      }
+      img {
+        display: block;
+      }
+      
+      figure {
+        display: inline-block;
+        margin: 0.5em;
+      }
+      
+      figcaption {
+        background-color: #000;
+        color: #FFF;
+        padding: 0.5em 0.5em;
+      }
+    </style>
   </head>
   <body>
-    <img src="image.png" class=source>
-    <img class=normalized>
-    <img class=inverted>
-    <img class="inverted normalized">
+    <figure>
+      <img src="image.png" class=source>
+      <figcaption>Source</figcaption>
+    </figure>
+    <figure>
+      <img class=inverted>
+      <figcaption>Inverted and Opacity(1) (PNG)</figcaption>
+    </figure>
+    <figure>
+      <img class=normalized>
+      <figcaption>Normalized (JPEG 10%)</figcaption>
+    </figure>
+    <figure>
+      <img class="desaturated normalized">
+      <figcaption>Normalized and Desaturated (50%)</figcaption>
+    </figure>
+    <figure>
+      <img class="inverted normalized">
+      <figcaption>Inverted and Normalized (PNG)</figcaption>
+    </figure>
+    <figure>
+      <img class=grayscale>
+      <figcaption>Grayscale</figcaption>
+    </figure>
+    <figure>
+      <img class="grayscale normalized">
+      <figcaption>Grayscale Normalized</figcaption>
+    </figure>
+    <figure>
+      <img class="grayscale normalized inverted">
+      <figcaption>Grayscale Normalized Inverted</figcaption>
+    </figure>
+    <figure>
+      <img class=desaturated>
+      <figcaption>50% Desaturated</figcaption>
+    </figure>
+    <figure>
+      <img class=cropped>
+      <figcaption>Cropped</figcaption>
+    </figure>
+    <figure>
+      <img class=resized100>
+      <figcaption>Resized 128x128</figcaption>
+    </figure>
+    <figure>
+      <img class=resized50>
+      <figcaption>Resized 50%</figcaption>
+    </figure>
+    <figure>
+      <img class=resized200>
+      <figcaption>Resized 200%</figcaption>
+    </figure>
+    <figure>
+      <img class=binarized>
+      <figcaption>Binarized - Threshold 192</figcaption>
+    </figure>
+    <figure>
+      <img class=flipped>
+      <figcaption>Flipped</figcaption>
+    </figure>
+    <figure>
+      <img class=flippedH>
+      <figcaption>Flipped Horizontal</figcaption>
+    </figure>
+    <div>Processing Time: <span class=time>Running</span></div>
     
     <script src="../src/burlap.js"></script>
     <script>
       document.body.onload = function(){
         var $source = document.querySelector('.source');
         var $normalized = document.querySelector('.normalized');
+        var $normalizedAndDesaturated = document.querySelector('.desaturated.normalized');
         var $inverted = document.querySelector('.inverted');
         var $invertedAndNormalized = document.querySelector('.inverted.normalized');
+        var $grayscale = document.querySelector('.grayscale');
+        var $grayscaleAndNormalized = document.querySelector('.grayscale.normalized');
+        var $grayscaleAndNormalizedAndInverted = document.querySelector('.grayscale.normalized.inverted');
+        var $desaturated = document.querySelectorAll('.desaturated')[1];
+        var $cropped = document.querySelector('.cropped');
+        var $resized100 = document.querySelector('.resized100');
+        var $resized50 = document.querySelector('.resized50');
+        var $resized200 = document.querySelector('.resized200');
+        var $binarized = document.querySelector('.binarized');
+        var $flipped = document.querySelector('.flipped');
+        var $flippedH = document.querySelector('.flippedH');
+
+        var start = Date.now();
         
-        $normalized.src = new Burlap($source).normalize().toPNG();
-        $inverted.src = new Burlap($source).invert().toPNG();
-        $invertedAndNormalized.src = new Burlap($source).invert().normalize().toJPEG(1);
+        $inverted.src = new Burlap($source).invert().opacity(1).toPNG();
+
+        $normalized.src = new Burlap($source).normalize().toJPEG(0.1);
+        $normalizedAndDesaturated.src = new Burlap($source).normalize().saturation(0.5).opacity(1).toPNG();
+        
+        $invertedAndNormalized.src = new Burlap($source).invert().normalize().toPNG();
+
+        $grayscale.src = new Burlap($source).grayscale().opacity(1).toPNG();
+        $grayscaleAndNormalized.src = new Burlap($source).grayscale().normalize().opacity(1).toPNG();
+        $grayscaleAndNormalizedAndInverted.src = new Burlap($source).grayscale().invert().normalize().opacity(1).toPNG();
+
+        $desaturated.src = new Burlap($source).saturation(0.5).toPNG();
+
+        $cropped.src = new Burlap($source).crop(34, 23, 512, 115).toPNG();
+
+        $resized100.src = new Burlap($source).resize(128, 128, true).toPNG();
+        $resized50.src = new Burlap($source).resize(0.5, 0.5).toPNG();
+        $resized200.src = new Burlap($source).resize(2, 2).toPNG();
+        
+        $binarized.src = new Burlap($source).normalize().threshold(192).toPNG();
+
+        $flipped.src = new Burlap($source).flipXY().toPNG();
+        // $flippedH.src = new Burlap($source).flipH().toPNG();
+
+        var end = Date.now();
+        document.querySelector('.time').innerHTML = Math.round(end - start) + 'ms';
       };
     </script>
   </body>

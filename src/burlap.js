@@ -17,7 +17,7 @@
   }
 
   var isElement = isX(undefined);
-  var isCanvas = isX('Canvas');  
+  var isCanvas = isX('Canvas');
 
   function getCanvas(width, height) {
     var canvas = document.createElement('canvas');
@@ -86,7 +86,7 @@
   }
   
   function invert() {
-    var canvas = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    var canvas = this.el = (isCanvas(this.el) ? this.el : toCanvas(this.el));
     var context = toContext(canvas);
     
     var imageData = pixelData(canvas);
@@ -94,7 +94,7 @@
     var numPixels = pixels.length;
 
     // Clear the image
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    // context.clearRect(0, 0, canvas.width, canvas.height);
 
     // Access and change pixel values
     for (var i = 0; i < numPixels; i += 4) {
@@ -106,7 +106,27 @@
     // Draw image data to the canvas
     context.putImageData(imageData, 0, 0);
     
-    this.el = canvas;
+    return this;
+  }
+
+  function opacity(level) {
+    var canvas = this.el = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    var context = toContext(canvas);
+    
+    var imageData = pixelData(canvas);
+    var pixels = imageData.data;
+    var numPixels = pixels.length;
+
+    // Clear the image
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Access and change pixel values
+    for (var i = 0; i < numPixels; i += 4) {
+      pixels[i+3] = level * 255;
+    }
+
+    // Draw image data to the canvas
+    context.putImageData(imageData, 0, 0);
     
     return this;
   }
@@ -117,41 +137,60 @@
   }
 
   function normalize() {
-    var canvas = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    var canvas = this.el = (isCanvas(this.el) ? this.el : toCanvas(this.el));
     var context = toContext(canvas);
 
     var imageData = pixelData(canvas);
     var pixels = imageData.data;
     var numPixels = pixels.length;
 
-    var max = {
-      r: 0,
-      g: 0,
-      b: 0,
-      a: 0
+    var state = {
+      r: {
+        max: 0,
+        min: 255,
+        range: undefined,
+        factor: undefined
+      },
+      g: {
+        max: 0,
+        min: 255,
+        range: undefined,
+        factor: undefined
+      },
+      b: {
+        max: 0,
+        min: 255,
+        range: undefined,
+        factor: undefined
+      }
     };
+    
+    var r,g,b,a;
 
-    // Access and change pixel values
+    // Find max and min values for each channel
     for (var i = 0; i < numPixels; i += 4) {
-      max.r = (pixels[i] > max.r ? pixels[i] : max.r); // Red
-      max.g = (pixels[i+1] > max.g ? pixels[i+1] : max.g); // Green
-      max.b = (pixels[i+2] > max.b ? pixels[i+2] : max.b); // Blue
-      max.a = (pixels[i+2] > max.a ? pixels[i+2] : max.a); // Alpha
+      state.r.max = (pixels[i]   > state.r.max ? pixels[i]   : state.r.max);
+      state.g.max = (pixels[i+1] > state.g.max ? pixels[i+1] : state.g.max);
+      state.b.max = (pixels[i+2] > state.b.max ? pixels[i+2] : state.b.max);
+
+      state.r.min = (pixels[i]   < state.r.min ? pixels[i]   : state.r.min);
+      state.g.min = (pixels[i+1] < state.g.min ? pixels[i+1] : state.g.min);
+      state.b.min = (pixels[i+2] < state.b.min ? pixels[i+2] : state.b.min);
     }
+    
+    state.r.range = state.r.max - state.r.min;
+    state.g.range = state.g.max - state.g.min;
+    state.b.range = state.b.max - state.b.min;
+    
+    state.r.factor = (state.r.range === 0 ? 1 : 255 / state.r.range);
+    state.g.factor = (state.g.range === 0 ? 1 : 255 / state.g.range);
+    state.b.factor = (state.b.range === 0 ? 1 : 255 / state.b.range);    
 
-    var factor = {
-      r: 255 / max.r,
-      g: 255 / max.g,
-      b: 255 / max.b
-    };
-
-    // noprotect
     // Access and change pixel values
     for (var j = 0; j < numPixels; j += 4) {
-      pixels[j] = pixels[j] * max.r; // Red
-      pixels[j+1] = pixels[j+1] * max.g; // Green
-      pixels[j+2] = pixels[j+2] * max.b; // Blue
-      pixels[j+3] = pixels[j+3] * max.a; // Alpha
+      pixels[j]   = r = (pixels[j]   - state.r.min) * state.r.factor;
+      pixels[j+1] = g = (pixels[j+1] - state.g.min) * state.g.factor;
+      pixels[j+2] = b = (pixels[j+2] - state.b.min) * state.b.factor;
     }
 
     // Draw image data to the canvas
@@ -206,6 +245,227 @@
 
     return normalized;
   }
+  
+  function rgbToHsl(pixel) {
+    var r = pixel[0] /= 255;
+    var g = pixel[1] /= 255;
+    var b = pixel[2] /= 255;
+
+    var max = Math.max(r, g, b);
+    var min = Math.min(r, g, b);
+    var hue;
+    var saturation;
+    var luma = (max + min) / 2;
+
+    if (max === min) {
+      hue = saturation = 0; // achromatic
+    } else {
+      var d = max - min;
+      saturation = (luma > 0.5 ? d / (2 - max - min) : d / (max + min));
+      switch (max) {
+        case r: hue = (g - b) / d + (g < b ? 6 : 0);
+          break;
+        case g: hue = (b - r) / d + 2;
+          break;
+        case b: hue = (r - g) / d + 4;
+          break;
+        }
+        hue /= 6;
+      }
+
+      return {
+        h: hue,
+        s: saturation,
+        l: luma
+      };
+  }
+  
+  function hslToRgb(hslPixel){
+    var h = hslPixel.h;
+    var s = hslPixel.s;
+    var l = hslPixel.l;
+    
+    var r, g, b;
+
+    if (s === 0) {
+      r = g = b = l; // achromatic
+    } else {
+      function hue2rgb(p, q, t){
+        if(t < 0) t += 1;
+        if(t > 1) t -= 1;
+        if(t < 1/6) return p + (q - p) * 6 * t;
+        if(t < 1/2) return q;
+        if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return Math.round(p * 255);
+      }
+
+      var q = (l < 0.5 ? l * (1 + s) : l + s - l * s);
+      var p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+
+    return [r, g, b];
+  }
+
+  function grayscale() {
+    var canvas = this.el = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    var context = toContext(canvas);
+    
+    var imageData = pixelData(canvas);
+    var pixels = imageData.data;
+    var numPixels = pixels.length;
+
+    // Clear the image
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 0.2126 R + 0.7152 G + 0.0722 B ITU-R
+    // 0.299 R + 0.587 G + 0.114 B CCIR601
+    // Access and change pixel values
+    for (var i = 0; i < numPixels; i += 4) {
+      var pixel = pixels[i] * 0.2126 + pixels[i+1] * 0.7152 + pixels[i+2] * 0.0722;
+      pixels[i]   = pixel; // Red
+      pixels[i+1] = pixel; // Green
+      pixels[i+2] = pixel; // Blue
+    }
+
+    // Draw image data to the canvas
+    context.putImageData(imageData, 0, 0);
+    
+    return this;
+  }
+
+  function saturation(percent) {
+    // Fast return if the saturation won't actually change.
+    if (percent === 1) {
+      return this;
+    }
+
+    var canvas = this.el = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    var context = toContext(canvas);
+    
+    var imageData = pixelData(canvas);
+    var pixels = imageData.data;
+    var numPixels = pixels.length;
+
+    // Clear the image
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Access and change pixel values
+    for (var i = 0; i < numPixels; i += 4) {
+      var pixel = pixels[i] * 0.2126 + pixels[i+1] * 0.7152 + pixels[i+2] * 0.0722;
+      pixels[i]   = (pixel * (1-percent)) + (pixels[i]   * percent); // Red
+      pixels[i+1] = (pixel * (1-percent)) + (pixels[i+1] * percent); // Green
+      pixels[i+2] = (pixel * (1-percent)) + (pixels[i+2] * percent); // Blue
+    }
+
+    // Draw image data to the canvas
+    context.putImageData(imageData, 0, 0);
+    
+    return this;
+  }
+
+  function crop(x, y, width, height) {
+    var canvas = this.el = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    
+    var croppedCanvas = getCanvas(width, height);
+    var croppedContext = toContext(croppedCanvas);
+    
+    croppedContext.drawImage(canvas, x, y, width, height, 0, 0, width, height);
+    this.el = canvas = croppedCanvas;
+
+    return this;
+  }
+
+  function resize(width, height, absoluteSize) {
+    var canvas = this.el = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    
+    var width  = (absoluteSize ? width  : width  * canvas.width);
+    var height = (absoluteSize ? height : height * canvas.height);
+    
+    var resizedCanvas = getCanvas(width, height);
+    var resizedContext = toContext(resizedCanvas);
+    
+    resizedContext.drawImage(canvas, 0, 0, width, height);
+    this.el = canvas = resizedCanvas;
+
+    return this;
+  }
+
+  function binarize(threshold) {
+    var canvas = this.el = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    var context = toContext(canvas);
+
+    var imageData = pixelData(canvas);
+    var pixels = imageData.data;
+    var numPixels = pixels.length;
+
+    // Clear the image
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Access and change pixel values
+    for (var i = 0; i < numPixels; i += 4) {
+      var grayscalePixel = pixels[i] * 0.2126 + pixels[i + 1] * 0.7152 + pixels[i + 2] * 0.0722;
+      var binarizedPixel = Math.round(grayscalePixel > threshold ? 255 : 0);
+      pixels[i] = pixels[i + 1] = pixels[i + 2] = binarizedPixel;
+      pixels[i + 3] = 255;
+    }
+
+    // console.log(pixels);
+
+    // Draw image data to the canvas
+    context.putImageData(imageData, 0, 0);
+
+    return this;
+  }
+
+  function histogram(canvas) {
+
+  }
+
+  function flipXY() {
+    var canvas = this.el = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    var context = toContext(canvas);
+
+    var imageData = pixelData(canvas);
+    var pixels = imageData.data;
+    var numPixels = pixels.length;
+
+    // Clear the image
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+
+    pixels.reverse();
+
+    // Draw image data to the canvas
+    context.putImageData(imageData, 0, 0);
+
+    return this;
+  }
+
+  function flipH() {
+    var canvas = this.el = (isCanvas(this.el) ? this.el : toCanvas(this.el));
+    var context = toContext(canvas);
+
+    var imageData = pixelData(canvas);
+    var pixels = imageData.data;
+    var numPixels = pixels.length;
+
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+
+    var buffer = new ArrayBuffer(pixels.length);
+    var ta32 = new Uint32Array(buffer);
+
+    for (var i = 0, l = numPixels / 4; i < l; i += canvas.width) {http://localhost:52276/../test
+      //new Uint32Array(buffer, i, canvas.width).reverse();
+      ta32.subarray(i, canvas.width).reverse();
+    }
+
+    context.putImageData(imageData, 0, 0);
+
+    return this;
+
+  }
 
   // Constructor
   var Burlap = global.Burlap = function Burlap(el) {
@@ -220,4 +480,19 @@
   
   Burlap.prototype.invert = invert;
   Burlap.prototype.normalize = normalize;
+  Burlap.prototype.opacity = opacity;
+  Burlap.prototype.grayscale = grayscale;
+  Burlap.prototype.saturation = saturation;
+  Burlap.prototype.crop = crop;  
+  Burlap.prototype.resize = resize;
+  Burlap.prototype.threshold = binarize;
+  Burlap.prototype.flipXY = flipBoth;
+  // Burlap.prototype.flipH = flipH;
+  // png8 check color depth
+  // threshold calculation. Check out Otsu. https://en.wikipedia.org/wiki/Otsu%27s_method#JavaScript_implementation
+  // rotate
+  // flip
+  // perform operations in web workers if supported
+  // Investigate removing clearRect
+  
 })(this);
