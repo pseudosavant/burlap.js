@@ -27,3 +27,12 @@
 * Burlap.flipX: Flips the current `<canvas>` along the X-axis.
 * Burlap.flipY: Flips the current `<canvas>` along the Y-axis.
 * Burlap.flipXY: Flip the current `<canvas>` along the x and y axis.
+
+## Examples
+You can run the test harness (/test/index.html) locally or try the [jsbin version](https://output.jsbin.com/zikani/) online to try out Burlap.js.
+
+## Why Burlap
+Why Burlap? Burlap is a kind of canvas. Get it? Yeah, I know. Not that funny.
+
+## License
+MIT
