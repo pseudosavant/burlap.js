@@ -1,6 +1,11 @@
 (function(global) {
   'use strict';
   
+  // Workaround for IE11 not having typed array's `reverse` method
+  if (!Uint32Array.prototype.reverse) {
+    Uint32Array.prototype.reverse = Array.prototype.reverse;
+  }
+
   function realWidth(element) {
     return element.naturalWidth || element.width;
   }
@@ -278,14 +283,12 @@
       return this;
     }
 
-
     for (var i = 0; i < subPixels.length; i += 4) {
       var pixel = subPixels[i] * 0.2126 + subPixels[i+1] * 0.7152 + subPixels[i+2] * 0.0722;
       subPixels[i]   = (pixel * (1-percent)) + (subPixels[i]   * percent); // Red
       subPixels[i+1] = (pixel * (1-percent)) + (subPixels[i+1] * percent); // Green
       subPixels[i+2] = (pixel * (1-percent)) + (subPixels[i+2] * percent); // Blue
     }
-
 
     context.putImageData(imageData, 0, 0);
     
@@ -393,6 +396,7 @@
   function flipXY() {
     // Create a new 32-bit array to access whole pixels at a time
     var pixels = new Uint32Array(subPixels.buffer);
+
     pixels.set(pixels.reverse());
 
     context.putImageData(imageData, 0, 0);

@@ -1,4 +1,4 @@
-Copyright 2016 - John Paul Ellis
+Copyright (C) 2016, John Paul Ellis
 
 # MIT License
 

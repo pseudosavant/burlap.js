@@ -31,6 +31,9 @@
 ## Examples
 You can run the test harness (/test/index.html) locally or try the [jsbin version](https://output.jsbin.com/zikani/) online to try out Burlap.js.
 
+## Browser Support
+IE11, Edge, Chrome, Firefox, Safari
+
 ## Why Burlap
 Why Burlap? Burlap is a kind of canvas. Get it? Yeah, I know. Not that funny.
 
