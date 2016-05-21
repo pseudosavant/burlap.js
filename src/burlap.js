@@ -2,18 +2,29 @@
   'use strict';
   
   // Workaround for IE11 not having typed array's `reverse` method
+  // Used for `flipX`
   if (!Uint32Array.prototype.reverse) {
     Uint32Array.prototype.reverse = Array.prototype.reverse;
   }
 
+  // Helper functions
+
+  // Get the real width of an element. Natural width gives the dimensions of the image, not the size it is being displayed at.
   function realWidth(element) {
     return element.naturalWidth || element.width;
   }
 
+  // Get the real height of an element. Natural width gives the dimensions of the image, not the size it is being displayed at.
   function realHeight(element) {
     return element.naturalHeight || element.height;
   }
+
+  function pixelData(canvas) {
+    var context = canvas.getContext('2d');
+    return context.getImageData(0, 0, canvas.width, canvas.height);
+  }
   
+  // Helper function that determines what kind of element an HTMLElement is.
   function isX(tagName) {
     return function (element, throwException) {
       var result = (element && element.tagName && (!tagName || tagName.toLowerCase() === element.tagName.toLowerCase));
@@ -24,6 +35,7 @@
   var isElement = isX(undefined);
   var isCanvas = isX('Canvas');
 
+  // Creates a canvas with the given width and height
   function getCanvas(width, height) {
     var canvas = document.createElement('canvas');
 
@@ -33,6 +45,7 @@
     return canvas;
   }
 
+  // 'Converts' a CanvasImageSource element into a canvas with the same dimensions
   function toCanvas(element) {
     isElement(element);
     
@@ -45,6 +58,7 @@
     return canvas;
   }
 
+  // Rasterizes the current `<canvas>` to a data URI with the given mime type and quality level (if applicable)
   function rasterize(mime, quality) {
     if (!mime) {
       throw Error('No mime type specified for rasterization');
@@ -57,14 +71,17 @@
     return canvas.toDataURL(mime, quality);
   }
 
+  // Rasterizes the current `<canvas>` to a JPEG data URI
   function toJPEG(quality) {
     return rasterize('image/jpeg', quality);
   }
 
+  // Rasterizes the current `<canvas>` to a PNG data URI
   function toPNG() {
     return rasterize('image/png');
   }
   
+  // Inverts the RGB pixels of the current `<canvas>`
   function invert() {
     for (var i = 0; i < subPixels.length; i += 4) {
       subPixels[i] = 255 - subPixels[i]; // Red
@@ -77,6 +94,7 @@
     return this;
   }
 
+  // Sets the opacity level for the alpha channels of the current `<canvas>`
   function opacity(level) {
     for (var i = 0; i < subPixels.length; i += 4) {
       subPixels[i + 3] = level * 255;
@@ -87,11 +105,7 @@
     return this;
   }
 
-  function pixelData(canvas) {
-    var context = canvas.getContext('2d');
-    return context.getImageData(0, 0, canvas.width, canvas.height);
-  }
-
+  // Normalizes the current `<canvas>` so that the image uses the entire dynamic range
   function normalize() {
     var state = {
       r: {
@@ -190,7 +204,8 @@
 
     return normalized;
   }
-  
+
+  // Converts a [r,g,b] pixel to {h, s, l}  
   function rgbToHsl(pixel) {
     var r = pixel[0] /= 255;
     var g = pixel[1] /= 255;
@@ -224,7 +239,8 @@
         l: luma
       };
   }
-  
+
+  // Converts a {h, s, l} pixel to [r,g,b]
   function hslToRgb(hslPixel){
     var h = hslPixel.h;
     var s = hslPixel.s;
@@ -254,9 +270,10 @@
     return [r, g, b];
   }
 
+  // Converts the `<canvas>` to grayscale using ITU-R coefficients
   function grayscale() {
-    // 0.2126 R + 0.7152 G + 0.0722 B ITU-R
-    // 0.299 R + 0.587 G + 0.114 B CCIR601
+    // ITU-R: 0.2126 R + 0.7152 G + 0.0722 B
+    // CCIR601: 0.299 R + 0.587 G + 0.114 B
 
     for (var i = 0; i < subPixels.length; i += 4) {
       var pixel = subPixels[i] * 0.2126 + subPixels[i+1] * 0.7152 + subPixels[i+2] * 0.0722;
@@ -265,12 +282,12 @@
       subPixels[i+2] = pixel; // Blue
     }
 
-
     context.putImageData(imageData, 0, 0);
     
     return this;
   }
 
+  // Reduces the saturation of the current `<cavas>` by X percent
   function saturation(percent) {
     // Fast return if the saturation won't actually change.
     if (percent === 1) {
@@ -295,6 +312,7 @@
     return this;
   }
 
+  // Crops the current `<canvas>` to the given width and height starting at x,y.
   function crop(x, y, width, height) {
     var croppedCanvas = getCanvas(width, height);
     var croppedContext = croppedCanvas.getContext('2d');
@@ -305,6 +323,7 @@
     return this;
   }
 
+  // Resizes the `<canvas>` relatively to the set width and height. Resizes in absolute pixels if `absoluteSize` == true.
   function resize(width, height, absoluteSize) {
     width  = (absoluteSize ? width  : width  * canvas.width);
     height = (absoluteSize ? height : height * canvas.height);
@@ -318,9 +337,9 @@
     return this;
   }
 
+  // Converts the `<canvas>` to a 1-bit image dividing pixels at the given threshold. Threshold will automatically be determined using Otsu's method if no threshold is provided.
   function threshold(EightBitThreshold) {
     var thresh = EightBitThreshold || otsu(histogram(canvas), subPixels.length);
-
 
     for (var i = 0; i < subPixels.length; i += 4) {
       var grayscalePixel = subPixels[i] * 0.2126 + subPixels[i + 1] * 0.7152 + subPixels[i + 2] * 0.0722;
@@ -329,12 +348,12 @@
       subPixels[i + 3] = 255;
     }
 
-
     context.putImageData(imageData, 0, 0);
 
     return this;
   }
 
+  // Otsu method of determining the ideal threshold level for binarization
   function otsu(histogram, pixelsNumber) {
     var sum = 0;
     var sumB = 0;
@@ -349,12 +368,11 @@
     for (var i = 0; i < 256; ++i) {
       wB += histogram[i];
 
-      if (wB === 0)
-        continue;
+      if (wB === 0) { continue; }
+
       wF = pixelsNumber - wB;
     
-      if (wF === 0)
-        break;
+      if (wF === 0) { break; }
     
       sumB += i * histogram[i];
       mB = sumB / wB;
@@ -369,6 +387,7 @@
     return threshold;
   }
 
+  // Returns an array with the luma histogram of the `<canvas>`
   function histogram() {
     var hist = [];
 
@@ -393,6 +412,7 @@
     return hist;
   }
 
+  // Flips the `<canvas>` along both the x and y axis
   function flipXY() {
     // Create a new 32-bit array to access whole pixels at a time
     var pixels = new Uint32Array(subPixels.buffer);
@@ -404,6 +424,7 @@
     return this;
   }
 
+  // Flips the `<canvas>` along the x axis
   function flipX() {
     // Create a new 32-bit array to access whole pixels at a time
     var pixels = new Uint32Array(subPixels.buffer);
@@ -421,6 +442,7 @@
     return this;
   }
 
+  // Flips the `<canvas>` along the y axis
   function flipY() {
     flipX();
     flipXY();
