@@ -5,12 +5,11 @@
   You can think of it kind of like jQuery but for `<canvas>` instead of the DOM.
 
 ## Fluent API
-  Burlap.js uses the fluent API pattern to make running multiple `<canvas>
-  ` operations much easier.
+  Burlap.js uses the fluent API pattern to make running multiple `<canvas>` operations much easier.
 
   Example:
 
-    $img.src = new Burlap($sourceImageElement).saturation(0.5).flipXY().resize(0.5).toJPEG(0.8);
+    $img.src = Burlap(CanvasImageSource).saturation(0.5).flipXY().resize(0.5).toJPEG(0.8);
 
 ## Burlap.js operations
 * Burlap.toCanvas: Returns a `<canvas>` with the current image Burlap is processing.

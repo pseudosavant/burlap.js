@@ -111,31 +111,31 @@
 
       var start = Date.now();
 
-      $('.inverted').src = new Burlap($source).invert().opacity(1).toPNG();
+      $('.inverted').src = Burlap($source).invert().opacity(1).toPNG();
 
-      $('.normalized').src = new Burlap($source).normalize().toJPEG(0.1);
-      $('.desaturated.normalized').src = new Burlap($source).normalize().saturation(0.5).opacity(1).toPNG();
+      $('.normalized').src = Burlap($source).normalize().toJPEG(0.1);
+      $('.desaturated.normalized').src = Burlap($source).normalize().saturation(0.5).opacity(1).toPNG();
 
-      $('.inverted.normalized').src = new Burlap($source).invert().normalize().toPNG();
+      $('.inverted.normalized').src = Burlap($source).invert().normalize().toPNG();
 
-      $('.grayscale').src = new Burlap($source).grayscale().opacity(1).toPNG();
-      $('.grayscale.normalized').src = new Burlap($source).grayscale().normalize().opacity(1).toPNG();
-      $('.grayscale.normalized.inverted').src = new Burlap($source).grayscale().invert().normalize().opacity(1).toPNG();
+      $('.grayscale').src = Burlap($source).grayscale().opacity(1).toPNG();
+      $('.grayscale.normalized').src = Burlap($source).grayscale().normalize().opacity(1).toPNG();
+      $('.grayscale.normalized.inverted').src = Burlap($source).grayscale().invert().normalize().opacity(1).toPNG();
 
-      document.querySelectorAll('.desaturated')[1].src = new Burlap($source).saturation(0.5).toPNG();
+      document.querySelectorAll('.desaturated')[1].src = Burlap($source).saturation(0.5).toPNG();
 
-      $('.cropped').src = new Burlap($source).crop(34, 23, 512, 115).toPNG();
+      $('.cropped').src = Burlap($source).crop(34, 23, 512, 115).toPNG();
 
-      $('.resized100').src = new Burlap($source).resize(128, 128, true).toPNG();
-      $('.resized50').src = new Burlap($source).resize(0.5, 0.5).toPNG();
-      $('.resized200').src = new Burlap($source).resize(2, 2).toPNG();
+      $('.resized100').src = Burlap($source).resize(128, 128, true).toPNG();
+      $('.resized50').src = Burlap($source).resize(0.5, 0.5).toPNG();
+      $('.resized200').src = Burlap($source).resize(2, 2).toPNG();
 
-      $('.binarized').src = new Burlap($source).threshold(192).toPNG();
-      $('.autoBinarized').src = new Burlap($source).normalize().threshold().toPNG();
+      $('.binarized').src = Burlap($source).threshold(192).toPNG();
+      $('.autoBinarized').src = Burlap($source).normalize().threshold().toPNG();
 
-      $('.flippedXY').src = new Burlap($source).flipXY().toPNG();
-      $('.flippedX').src = new Burlap($source).flipX().toPNG();
-      $('.flippedY').src = new Burlap($source).flipY().toPNG();
+      $('.flippedXY').src = Burlap($source).flipXY().toPNG();
+      $('.flippedX').src = Burlap($source).flipX().toPNG();
+      $('.flippedY').src = Burlap($source).flipY().toPNG();
 
       var end = Date.now();
       document.querySelector('.time').innerHTML = Math.round(end - start) + 'ms';

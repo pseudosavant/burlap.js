@@ -390,8 +390,9 @@
   // Returns an array with the luma histogram of the `<canvas>`
   function histogram() {
     var hist = [];
+    var i;
 
-    for (var i = 0; i < 256; ++i) {
+    for (i = 0; i < 256; ++i) {
       hist[i] = 0;
     }
 
@@ -400,7 +401,7 @@
     var b;
     var gray;
 
-    for (var i = 0; i < subPixels.length; i += 4) {
+    for (i = 0; i < subPixels.length; i += 4) {
       r = imageData.data[i];
       b = imageData.data[i + 1];
       g = imageData.data[i + 2];
@@ -458,7 +459,7 @@
   var subPixels;
 
   // Constructor
-  var Burlap = global.Burlap = (function () {
+  function Burlap(CanvasImageSource) {
     el = null;
     canvas = null;
     context = null;
@@ -466,16 +467,20 @@
     imageData = null;
     subPixels = null;
 
-    return function Burlap(element) {
+    function BurlapConstructor(element) {
       el = element;
       canvas = toCanvas(el);
       context = canvas.getContext('2d');
 
       imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       subPixels = imageData.data;
-      return this;
-    };
-  })();
+    }
+    BurlapConstructor.prototype = Burlap.prototype;
+
+    return new BurlapConstructor(CanvasImageSource);
+  }
+
+  global.Burlap = Burlap;
   
   Burlap.prototype.toCanvas = toCanvas;
   Burlap.prototype.toPNG = toPNG;
@@ -493,6 +498,5 @@
   Burlap.prototype.flipY = flipY;
   Burlap.prototype.flipXY = flipXY;
   // rotate
-  // perform operations in web workers if supported
 
 })(this);
