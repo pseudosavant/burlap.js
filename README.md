@@ -14,14 +14,14 @@
 ## Burlap.js operations
 * Burlap.toCanvas: Returns a `<canvas>` with the current image Burlap is processing.
 * Burlap.toPNG: Returns a base64 encoded PNG dataUri.
-* Burlap.toJPEG([quality]): Returns a base64 encoded JPEG dataUri. Quality (0-1) can optionally be specified, otherwise it uses the browser's default quality level.
+* Burlap.toJPEG([quality]): Returns a base64 encoded JPEG dataUri. `quality` (0-1) can optionally be specified, otherwise it uses the browser's default quality level.
 * Burlap Burlap.invert: Inverts the current `<canvas>`.
 * Burlap.normalize: Normalizes the dynamic range of the current `<canvas>`.
-* Burlap.opacity: Set the opacity for the entire `<canvas>`.
+* Burlap.opacity(opacity): Set the opacity for the entire `<canvas>`.
 * Burlap.grayscale: Converts the current `<canvas>` to grayscale using the ITU-R RGB coefficients (see https://en.wikipedia.org/wiki/Rec._709#Luma_coefficients).
 * Burlap.saturation(level): Desaturates the curernt `<canvas>` to the level (0-1) specified.
 * Burlap.crop(x, y, width, height): Crops the current `<canvas>` to the given width and height starting at x,y 
-* Burlap.resize(width, height, [absoluteSize]): Resizes the current `<canvas>`. `width` and `height` are relative values by default. `width` and `height` are absolute values if `absoluteSize` is set to `true`.
+* Burlap.resize(width, [height], [absoluteSize]): Resizes the current `<canvas>`. `width` and `height` are relative values by default. `width` and `height` are absolute values if `absoluteSize` is set to `true`.
 * Burlap.threshold([threshold]): Turns the current `<canvas>` into a 2-bit image. `threshold` is automatically determined using the Otsu method but it can be set manually between 0-255.
 * Burlap.flipX: Flips the current `<canvas>` along the X-axis.
 * Burlap.flipY: Flips the current `<canvas>` along the Y-axis.

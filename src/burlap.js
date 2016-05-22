@@ -325,13 +325,29 @@
 
   // Resizes the `<canvas>` relatively to the set width and height. Resizes in absolute pixels if `absoluteSize` == true.
   function resize(width, height, absoluteSize) {
-    width  = (absoluteSize ? width  : width  * canvas.width);
-    height = (absoluteSize ? height : height * canvas.height);
+    var aspectRatio = canvas.width / canvas.height;
+
+    switch (arguments.length) {
+      case 1:
+          height = (absoluteSize ? width / aspectRatio : width);
+        break;
+      case 2:
+        if (typeof height === 'boolean') {
+          absoluteSize = height;
+          height = width;
+        }
+        break;
+      case 3:
+        break;
+    }
+
+    var finalWidth  = (absoluteSize ? width  : width  * canvas.width);
+    var finalHeight = (absoluteSize ? height : height * canvas.height);
     
-    var resizedCanvas = getCanvas(width, height);
+    var resizedCanvas = getCanvas(finalWidth, finalHeight);
     var resizedContext = resizedCanvas.getContext('2d');
     
-    resizedContext.drawImage(canvas, 0, 0, width, height);
+    resizedContext.drawImage(canvas, 0, 0, finalWidth, finalHeight);
     el = canvas = resizedCanvas;
 
     return this;

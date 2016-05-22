@@ -66,16 +66,16 @@
     <figcaption>Cropped</figcaption>
   </figure>
   <figure>
+    <img class=resized200>
+    <figcaption>Resized 200% y-axis</figcaption>
+  </figure>
+  <figure>
     <img class=resized100>
-    <figcaption>Resized 128x128</figcaption>
+    <figcaption>Resized 100x100px</figcaption>
   </figure>
   <figure>
     <img class=resized50>
     <figcaption>Resized 50%</figcaption>
-  </figure>
-  <figure>
-    <img class=resized200>
-    <figcaption>Resized 200%</figcaption>
   </figure>
   <figure>
     <img class=binarized>
@@ -126,9 +126,9 @@
 
       $('.cropped').src = Burlap($source).crop(34, 23, 512, 115).toPNG();
 
-      $('.resized100').src = Burlap($source).resize(128, 128, true).toPNG();
-      $('.resized50').src = Burlap($source).resize(0.5, 0.5).toPNG();
-      $('.resized200').src = Burlap($source).resize(2, 2).toPNG();
+      $('.resized200').src = Burlap($source).resize(1, 2).toPNG();
+      $('.resized100').src = Burlap($source).resize(100, 100, true).toPNG();
+      $('.resized50').src = Burlap($source).resize(0.5).toPNG();
 
       $('.binarized').src = Burlap($source).threshold(192).toPNG();
       $('.autoBinarized').src = Burlap($source).normalize().threshold().toPNG();
